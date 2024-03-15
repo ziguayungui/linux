@@ -139,6 +139,7 @@ static inline int
 nf_hook_entry_hookfn(const struct nf_hook_entry *entry, struct sk_buff *skb,
 		     struct nf_hook_state *state)
 {
+    // 调用各个hook函数进行处理
 	return entry->hook(entry->priv, skb, state);
 }
 
@@ -208,6 +209,9 @@ void nf_hook_slow_list(struct list_head *head, struct nf_hook_state *state,
  *	okfn must be invoked by the caller in this case.  Any other return
  *	value indicates the packet has been consumed by the hook.
  */
+/* 
+ * hook : hook点位置
+ */
 static inline int nf_hook(u_int8_t pf, unsigned int hook, struct net *net,
 			  struct sock *sk, struct sk_buff *skb,
 			  struct net_device *indev, struct net_device *outdev,
@@ -255,10 +259,10 @@ static inline int nf_hook(u_int8_t pf, unsigned int hook, struct net *net,
 
 	if (hook_head) {
 		struct nf_hook_state state;
-
+        // state 结构体赋值
 		nf_hook_state_init(&state, hook, pf, indev, outdev,
 				   sk, net, okfn);
-
+        // 处理函数
 		ret = nf_hook_slow(skb, &state, hook_head, 0);
 	}
 	rcu_read_unlock();
@@ -302,6 +306,7 @@ NF_HOOK(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk, struct 
 	struct net_device *in, struct net_device *out,
 	int (*okfn)(struct net *, struct sock *, struct sk_buff *))
 {
+    //调用hook函数处理，如果返回值为1(数据包允许通过)，则 调用 okfn 函数
 	int ret = nf_hook(pf, hook, net, sk, skb, in, out, okfn);
 	if (ret == 1)
 		ret = okfn(net, sk, skb);

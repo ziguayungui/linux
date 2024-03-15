@@ -221,12 +221,13 @@ struct ipt_entry *ipt_next_entry(const struct ipt_entry *entry)
 }
 
 /* Returns one of the generic firewall policies, like NF_ACCEPT. */
+// 返回一个通用防火墙策略，比如 NF_ACCEPT
 unsigned int
 ipt_do_table(struct sk_buff *skb,
 	     const struct nf_hook_state *state,
 	     struct xt_table *table)
 {
-	unsigned int hook = state->hook;
+	unsigned int hook = state->hook;    // hook 点
 	static const char nulldevname[IFNAMSIZ] __attribute__((aligned(sizeof(long))));
 	const struct iphdr *ip;
 	/* Initializing verdict to NF_DROP keeps gcc happy. */
@@ -1719,6 +1720,7 @@ int ipt_register_table(struct net *net, const struct xt_table *table,
 		       const struct nf_hook_ops *template_ops)
 {
 	struct nf_hook_ops *ops;
+    // hook点数量
 	unsigned int num_ops;
 	int ret, i;
 	struct xt_table_info *newinfo;
@@ -1756,7 +1758,9 @@ int ipt_register_table(struct net *net, const struct xt_table *table,
 		ret = -EINVAL;
 		goto out_free;
 	}
-
+    /* kmemdup( )函数的功能是根据给定的一段地址空间（这里由void * src和size_t len决定），
+     * 再分配一个内存空间（分配模式是gfp），并将原地址空间中的内容拷贝到新分配的内存空间中。
+     */
 	ops = kmemdup(template_ops, sizeof(*ops) * num_ops, GFP_KERNEL);
 	if (!ops) {
 		ret = -ENOMEM;

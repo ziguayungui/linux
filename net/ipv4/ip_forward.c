@@ -153,7 +153,7 @@ int ip_forward(struct sk_buff *skb)
 
 	if (net->ipv4.sysctl_ip_fwd_update_priority)
 		skb->priority = rt_tos2priority(iph->tos);
-
+    // netfilter forward hook
 	return NF_HOOK(NFPROTO_IPV4, NF_INET_FORWARD,
 		       net, NULL, skb, skb->dev, rt->dst.dev,
 		       ip_forward_finish);

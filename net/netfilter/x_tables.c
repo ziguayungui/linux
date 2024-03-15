@@ -1765,7 +1765,7 @@ int xt_register_template(const struct xt_table *table,
 	struct xt_template *t;
 
 	mutex_lock(&xt[af].mutex);
-
+    //遍历 xt_templates list，判断是否有同名 table
 	list_for_each_entry(t, &xt_templates[af], list) {
 		if (WARN_ON_ONCE(strcmp(table->name, t->name) == 0))
 			goto out_unlock;
@@ -1779,8 +1779,10 @@ int xt_register_template(const struct xt_table *table,
 	BUILD_BUG_ON(sizeof(t->name) != sizeof(table->name));
 
 	strscpy(t->name, table->name, sizeof(t->name));
+    // table_init 初始化函数
 	t->table_init = table_init;
 	t->me = table->me;
+    //添加到 xt_templates 链表中
 	list_add(&t->list, &xt_templates[af]);
 	ret = 0;
 out_unlock:

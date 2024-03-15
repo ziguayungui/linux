@@ -295,10 +295,12 @@ nf_hook_entry_head(struct net *net, int pf, unsigned int hooknum,
 	case NFPROTO_IPV4:
 		if (WARN_ON_ONCE(ARRAY_SIZE(net->nf.hooks_ipv4) <= hooknum))
 			return NULL;
+        //返回 hook head
 		return net->nf.hooks_ipv4 + hooknum;
 	case NFPROTO_IPV6:
 		if (WARN_ON_ONCE(ARRAY_SIZE(net->nf.hooks_ipv6) <= hooknum))
 			return NULL;
+        //返回 hook head
 		return net->nf.hooks_ipv6 + hooknum;
 #if IS_ENABLED(CONFIG_DECNET)
 	case NFPROTO_DECNET:
@@ -396,13 +398,13 @@ static int __nf_register_net_hook(struct net *net, int pf,
 			return err;
 		break;
 	}
-
+    //获取entry的head
 	pp = nf_hook_entry_head(net, pf, reg->hooknum, reg->dev);
 	if (!pp)
 		return -EINVAL;
 
 	mutex_lock(&nf_hook_mutex);
-
+    //找到钩子应该插入的位置并插入链表
 	p = nf_entry_dereference(*pp);
 	new_hooks = nf_hook_entries_grow(p, reg);
 
@@ -527,10 +529,11 @@ int nf_register_net_hook(struct net *net, const struct nf_hook_ops *reg)
 			if (err < 0)
 				return err;
 		} else {
+            //IPv4协议上注册hook
 			err = __nf_register_net_hook(net, NFPROTO_IPV4, reg);
 			if (err < 0)
 				return err;
-
+            //IPv6协议上注册hook
 			err = __nf_register_net_hook(net, NFPROTO_IPV6, reg);
 			if (err < 0) {
 				__nf_unregister_net_hook(net, NFPROTO_IPV4, reg);
@@ -552,7 +555,7 @@ int nf_register_net_hooks(struct net *net, const struct nf_hook_ops *reg,
 {
 	unsigned int i;
 	int err = 0;
-
+    //n 代表 hook 点的数量，循环添加
 	for (i = 0; i < n; i++) {
 		err = nf_register_net_hook(net, &reg[i]);
 		if (err)
@@ -579,6 +582,11 @@ EXPORT_SYMBOL(nf_unregister_net_hooks);
 
 /* Returns 1 if okfn() needs to be executed by the caller,
  * -EPERM for NF_DROP, 0 otherwise.  Caller must hold rcu_read_lock. */
+/* 
+ * skb: skb 报文
+ * state： 结构体内保存了一些需要传递的状态值
+ * e： hook head
+*/
 int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state,
 		 const struct nf_hook_entries *e, unsigned int s)
 {
@@ -589,13 +597,18 @@ int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state,
 		verdict = nf_hook_entry_hookfn(&e->hooks[s], skb, state);
 		switch (verdict & NF_VERDICT_MASK) {
 		case NF_ACCEPT:
+        //继续后续处理
 			break;
 		case NF_DROP:
+        //丢包
 			kfree_skb(skb);
 			ret = NF_DROP_GETERR(verdict);
 			if (ret == 0)
 				ret = -EPERM;
 			return ret;
+        /* NF_QUEUE 就是其中之一，它允许将数据包排队，以便用户空间的应用程序可以做出决策，
+         * 例如修改数据包内容、决定数据包的去向等。
+         */
 		case NF_QUEUE:
 			ret = nf_queue(skb, state, s, verdict);
 			if (ret == 1)
@@ -710,7 +723,7 @@ __netfilter_net_init(struct nf_hook_entries __rcu **e, int max)
 	for (h = 0; h < max; h++)
 		RCU_INIT_POINTER(e[h], NULL);
 }
-
+// netfilter 初始化
 static int __net_init netfilter_net_init(struct net *net)
 {
 	__netfilter_net_init(net->nf.hooks_ipv4, ARRAY_SIZE(net->nf.hooks_ipv4));
