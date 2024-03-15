@@ -592,8 +592,9 @@ int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state,
 {
 	unsigned int verdict;
 	int ret;
-
+    // 遍历当前hook点的 entries
 	for (; s < e->num_hook_entries; s++) {
+        //调用相关hook函数
 		verdict = nf_hook_entry_hookfn(&e->hooks[s], skb, state);
 		switch (verdict & NF_VERDICT_MASK) {
 		case NF_ACCEPT:
